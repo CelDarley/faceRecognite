@@ -1,0 +1,19 @@
+# Ambiente virtual
+venv/
+env/
+ENV/
+
+# Arquivos Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Arquivos de vídeo
+*.mp4
+*.avi
+*.mov
+
+# Arquivos temporários
+*.tmp
+*.temp
+.DS_Store 
