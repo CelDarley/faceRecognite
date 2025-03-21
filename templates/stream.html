@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reconhecimento Facial em Tempo Real</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #videoElement {
+            width: 100%;
+            max-width: 640px;
+            margin-bottom: 20px;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .match {
+            color: green;
+        }
+        .no-match {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reconhecimento Facial em Tempo Real</h1>
+        <video id="videoElement" autoplay></video>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const video = document.getElementById('videoElement');
+        const resultsDiv = document.getElementById('results');
+        let ws = null;
+
+        // Inicia a câmera
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error('Erro ao acessar a câmera:', err);
+            }
+        }
+
+        // Conecta ao WebSocket
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:8000/ws/face-recognition');
+            
+            ws.onopen = () => {
+                console.log('Conectado ao servidor');
+                startStreaming();
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                updateResults(data);
+            };
+
+            ws.onerror = (error) => {
+                console.error('Erro no WebSocket:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('Conexão fechada');
+            };
+        }
+
+        // Inicia o streaming de frames
+        function startStreaming() {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            setInterval(() => {
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob((blob) => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(blob);
+                    }
+                }, 'image/jpeg', 0.7);
+            }, 100); // Envia frames a cada 100ms
+        }
+
+        // Atualiza os resultados na interface
+        function updateResults(data) {
+            if (data.error) {
+                resultsDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                return;
+            }
+
+            let html = `<p>Faces encontradas: ${data.faces_found}</p>`;
+            
+            if (data.frame_results && data.frame_results.length > 0) {
+                html += '<ul>';
+                data.frame_results.forEach(result => {
+                    const className = result.status === 'match' ? 'match' : 'no-match';
+                    html += `<li class="${className}">
+                        ${result.name} - ${result.status === 'match' ? 'Correspondência encontrada' : 'Sem correspondência'}
+                    </li>`;
+                });
+                html += '</ul>';
+            }
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // Inicia a aplicação
+        startCamera();
+        connectWebSocket();
+    </script>
+</body>
+</html> 
