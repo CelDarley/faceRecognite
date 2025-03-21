@@ -1,0 +1,24 @@
+name: face_recognition_app
+description: Aplicativo de reconhecimento facial em tempo real
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  camera: ^0.10.5+5
+  web_socket_channel: ^2.4.0
+  image: ^4.1.3
+  path_provider: ^2.1.1
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true 
